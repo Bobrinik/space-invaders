@@ -35,3 +35,5 @@
                       TANK-ARMOR-SPRITE)
                      (- (/ TANK-WIDTH 2) (/ CANNON-WIDTH 2)) (- TANK-ARMOR-HEIGHT TANK-HEIGHT)
                      TANK-CANNON-SPRITE))
+
+(define BULLET-SPRITE (ellipse (* CANNON-WIDTH 0.75) (/ TANK-HEIGHT 2) "solid" "red"))
