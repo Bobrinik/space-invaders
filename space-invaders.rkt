@@ -2,6 +2,8 @@
 ;; about the language level of this file in a form that our tools can easily process.
 #reader(lib "htdp-intermediate-reader.ss" "lang")((modname space-invaders) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 (require 2htdp/image)
+(require 2htdp/universe)
+
 ;; Constants
 
 ; Define Sprites
@@ -37,3 +39,83 @@
                      TANK-CANNON-SPRITE))
 
 (define BULLET-SPRITE (ellipse (* CANNON-WIDTH 0.75) (/ TANK-HEIGHT 2) "solid" "red"))
+
+; Define Scene
+(define MTS-WIDTH 200)
+(define MTS-HEIGHT 1000)
+(define MTS (empty-scene MTS-WIDTH MTS-HEIGHT))
+
+;; Data Definitions
+
+(define-struct tank (x y dx))
+;; Tank is a compoud structure (make-tank Integer Integer)
+;; interp. It represents a tank located at x and y coordinates moving with some speed
+
+(define T0 (make-tank 0 10 10))
+
+#; (define (fn-for-tank tnk)
+     (... (tank-x tnk)
+          (tank-y tnk)
+          (tank-dx tnk)))
+
+;; Template rules used:
+;; - compound: 2 fields
+
+
+
+;; Functions
+
+(define (main tnk)
+  (big-bang (main tnk)
+    (on-tick next-tank 1)     ; Tank -> Tank
+    (to-draw render-tank)   ; Tank -> Image
+    (on-key handle-tank)))  ; Tank KeyEvent -> Tank
+
+;; Tank -> Tank
+;; Produces the fallowing state of the tank.
+(check-expect (next-tank (make-tank 10 0 10)) (make-tank 20 0 10))
+(check-expect (next-tank (make-tank 10 0 -10)) (make-tank 0 0 -10))
+(check-expect (next-tank (make-tank MTS-WIDTH 0 10)) (make-tank MTS-WIDTH 0 10))
+(check-expect (next-tank (make-tank 0 0 -10)) (make-tank 0 0 -10))
+
+; (define (next-tank tnk) tnk) ; stub
+
+(define (next-tank tnk)
+  (make-tank (cond [(< MTS-WIDTH (+ (tank-x tnk) (tank-dx tnk))) (tank-x tnk)]
+                   [(> 0 (+ (tank-x tnk) (tank-dx tnk))) (tank-x tnk)]
+                   [else (+ (tank-x tnk) (tank-dx tnk))])
+             (tank-y tnk)
+             (tank-dx tnk)))
+
+
+;; Tank -> Iage
+;; Renders tank from the tank data definition.
+
+(check-expect (render-tank (make-tank 0 0 10)) (place-image TANK-SPRITE 0 0 MTS))
+(check-expect (render-tank (make-tank 10 0 10)) (place-image TANK-SPRITE 10 0 MTS))
+
+; (define (render-tank tank) MTS) ; stub
+(define (render-tank tnk)
+  (place-image TANK-SPRITE (tank-x tnk) (tank-y tnk) MTS))
+
+;; Tank KeyEvent -> Tank
+;; Changes direction of the tank depending on Key pressed.
+
+(check-expect (handle-tank (make-tank 0 12 10) "left")   (make-tank 0 12 -10))
+(check-expect (handle-tank (make-tank 0 12 -10) "left")  (make-tank 0 12 -10))
+(check-expect (handle-tank (make-tank 0 12 10) "right")  (make-tank 0 12 10))
+(check-expect (handle-tank (make-tank 0 12 -10) "right") (make-tank 0 12 10))
+
+
+; (define (handle-tank tnk kvt) tnk) ; stub
+(define (handle-tank tnk ke)
+  (cond [(key=? ke "left") (make-tank (tank-x tnk) (tank-y tnk)
+                                      (if (> 0 (tank-dx tnk))
+                                          (tank-dx tnk)
+                                          (* -1 (tank-dx tnk))))]
+        [(key=? ke "right") (make-tank (tank-x tnk) (tank-y tnk)
+                                       (if (< 0 (tank-dx tnk))
+                                           (tank-dx tnk)
+                                           (* -1 (tank-dx tnk))))]
+        [else tnk]))
+
