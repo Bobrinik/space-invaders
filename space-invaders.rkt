@@ -63,6 +63,52 @@
 
 
 
+(define-struct bullet (x y dy))
+;; Bullet is a compound structure (make-bullet Natural Natural Natural).
+;; interp. Bullet represents bullet on the empty scene.
+
+(define B0 (make-bullet 0 0 1))
+(define B1 (make-bullet 1 13 12))
+
+#; (define (fn-for-bullet blt)
+     (... (bullet-x blt)
+          (bullet-y blt)
+          (bullet-dy blt)))
+
+(define-struct alien-ship (x y dx dy))
+;; Alien ship is a compound structure (make-alien-ship Natural Natural Integer Natural).
+;; interp. Alien ship represents alien ship on the empty scene.
+
+(define AS0 (make-alien-ship 0 0 -12 10))
+(define AS1 (make-alien-ship 0 10 -12 10))
+
+#; (define (fn-for-alien-ship als)
+     (... (alien-ship-x als)
+          (alien-ship-y als)
+          (alien-ship-dx als)
+          (alien-ship-dy als)))
+
+
+;; ListOfEvents is one of:
+;; - empty
+;; - tank ListOfEvents
+;; - bullet ListOfEvents
+;; - alien-ship ListOfEvents
+;; INVARIANT:
+;;    - There is only one tank in ListOfEvents
+
+(define LOE0 empty)
+(define LOE1 (list (make-tank 0 12 1)))
+(define LOE2 (list (make-tank 0 12 1) (make-bullet 0 9 1) (make-bullet 0 12 11)))
+(define LOE3 (cons AS1 (cons AS0 LOE2)))
+
+#;(define (fn-for-loe loe)
+    (cond [(empty? loe) (...)]
+          [else
+           (... (first loe)
+                (fn-for-loe (rest loe)))]))
+
+
 ;; Functions
 
 (define (main tnk)
@@ -74,15 +120,15 @@
 ;; Tank -> Tank
 ;; Produces the fallowing state of the tank.
 (check-expect (next-tank (make-tank 10 0 10)) (make-tank 20 0 10))
-(check-expect (next-tank (make-tank 10 0 -10)) (make-tank 0 0 -10))
-(check-expect (next-tank (make-tank MTS-WIDTH 0 10)) (make-tank MTS-WIDTH 0 10))
-(check-expect (next-tank (make-tank 0 0 -10)) (make-tank 0 0 -10))
+(check-expect (next-tank (make-tank 10 0 -10)) (make-tank (/ CANNON-WIDTH 2) 0 -10))
+(check-expect (next-tank (make-tank MTS-WIDTH 0 10)) (make-tank (- MTS-WIDTH (/ CANNON-WIDTH 2)) 0 10))
+(check-expect (next-tank (make-tank 0 0 -10)) (make-tank (/ CANNON-WIDTH 2) 0 -10))
 
 ; (define (next-tank tnk) tnk) ; stub
 
 (define (next-tank tnk)
-  (make-tank (cond [(< MTS-WIDTH (+ (tank-x tnk) (tank-dx tnk))) (tank-x tnk)]
-                   [(> 0 (+ (tank-x tnk) (tank-dx tnk))) (tank-x tnk)]
+  (make-tank (cond [(< (- MTS-WIDTH (/ CANNON-WIDTH 2)) (+ (tank-x tnk) (tank-dx tnk))) (- MTS-WIDTH (/ CANNON-WIDTH 2))]
+                   [(> (/ CANNON-WIDTH 2) (+ (tank-x tnk) (tank-dx tnk))) (/ CANNON-WIDTH 2)]
                    [else (+ (tank-x tnk) (tank-dx tnk))])
              (tank-y tnk)
              (tank-dx tnk)))
@@ -118,3 +164,6 @@
                                            (tank-dx tnk)
                                            (* -1 (tank-dx tnk))))]
         [else tnk]))
+
+
+;; (main (make-tank (/ MTS-WIDTH 2) (- MTS-HEIGHT (/ TANK-HEIGHT 2)) 10))
