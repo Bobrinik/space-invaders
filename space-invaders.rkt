@@ -42,7 +42,7 @@
 
 ; Define Scene
 (define MTS-WIDTH 200)
-(define MTS-HEIGHT 1000)
+(define MTS-HEIGHT 500)
 (define MTS (empty-scene MTS-WIDTH MTS-HEIGHT))
 
 ;; Data Definitions
@@ -66,10 +66,10 @@
 ;; Functions
 
 (define (main tnk)
-  (big-bang (main tnk)
-    (on-tick next-tank 1)     ; Tank -> Tank
-    (to-draw render-tank)   ; Tank -> Image
-    (on-key handle-tank)))  ; Tank KeyEvent -> Tank
+  (big-bang  tnk
+    (on-tick next-tank 1)  ; Tank -> Tank
+    (to-draw render-tank)  ; Tank -> Image
+    (on-key handle-tank))) ; Tank KeyEvent -> Tank
 
 ;; Tank -> Tank
 ;; Produces the fallowing state of the tank.
@@ -118,4 +118,3 @@
                                            (tank-dx tnk)
                                            (* -1 (tank-dx tnk))))]
         [else tnk]))
-
