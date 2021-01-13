@@ -89,11 +89,24 @@
           (alien-ship-dy als)))
 
 
+;; Event is one of:
+;; - tank
+;; - bullet
+;; - alien-ship
+;; interp. Event represents possible data definition displayable on empty-scene
+
+(define ET  (make-tank 0 0 1))
+(define EB  (make-bullet 0 12 10))
+(define EAS (make-alien-ship 13 12 10))
+
+#;(define (fn-for-event evt)
+    (cond [(tank? evt) (fn-for-tank evt)]
+          [(bullet? evt) (fn-for-bullet evt)]
+          [(alien-ship? evt) (fn-for-alien-ship evt)]))
+
 ;; ListOfEvents is one of:
 ;; - empty
-;; - tank ListOfEvents
-;; - bullet ListOfEvents
-;; - alien-ship ListOfEvents
+;; - Event ListOfEvents
 ;; INVARIANT:
 ;;    - There is only one tank in ListOfEvents
 
@@ -125,7 +138,17 @@
 (check-expect (next-loe LOE2) (list (next-tank (first LOE2)) (next-bullet (second LOE2))  (next-bullet (third LOE2))))
 (check-expect (next-loe LOE3) (cons (next-alien-ship (first LOE3)) (cons (next-alien-ship (second LOE3)) (next-loe LOE2))))
 
-(define (next-loe loe) loe) ; stub
+; (define (next-loe loe) loe) ; stub
+(define (next-loe loe)
+  (cond [(empty? loe) empty]
+        [else
+         (cons (next (first loe))
+               (next-loe (rest loe)))]))
+
+;; WISH LIST
+;; !!!!
+;; Event -> Event
+(define (next-event evnt) evnt) ; stub
 
 
 ;; WISH LIST
