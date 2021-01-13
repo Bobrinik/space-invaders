@@ -113,9 +113,42 @@
 
 (define (main tnk)
   (big-bang  tnk
-    (on-tick next-tank 1)  ; Tank -> Tank
-    (to-draw render-tank)  ; Tank -> Image
-    (on-key handle-tank))) ; Tank KeyEvent -> Tank
+    (on-tick next-loe 1)  ; Tank -> Tank
+    (to-draw render-loe)  ; Tank -> Image
+    (on-key handle-loe))) ; Tank KeyEvent -> Tank
+
+
+;; ListOfEvents -> ListOfEvents
+;; Produces next iteration of ListOfEvents.
+
+(check-expect (next-loe LOE1) (list (next-tank (first LOE1))))
+(check-expect (next-loe LOE2) (list (next-tank (first LOE2)) (next-bullet (second LOE2))  (next-bullet (third LOE2))))
+(check-expect (next-loe LOE3) (cons (next-alien-ship (first LOE3)) (cons (next-alien-ship (second LOE3)) (next-loe LOE2))))
+
+(define (next-loe loe) loe) ; stub
+
+
+;; WISH LIST
+;; !!!!
+;; ListOfEvents -> Image
+(define (render-loe loe) loe)
+
+;; WISH LIST
+;; !!!!
+;; ListOfEvents -> ListOfEvents
+(define (handle-loe loe) loe)
+
+
+;; WISH LIST
+;; !!!!
+;; bullet -> bullet
+(define (next-bullet blt) blt)
+
+
+;; WISH LIST
+;; !!!!
+;; alien-ship -> alien-ship
+(define (next-alien-ship as) as)
 
 ;; Tank -> Tank
 ;; Produces the fallowing state of the tank.
