@@ -131,6 +131,7 @@
     (on-key handle-loe))) ; Tank KeyEvent -> Tank
 
 
+;; Next Events
 ;; ListOfEvents -> ListOfEvents
 ;; Produces next iteration of ListOfEvents.
 
@@ -142,26 +143,19 @@
 (define (next-loe loe)
   (cond [(empty? loe) empty]
         [else
-         (cons (next (first loe))
+         (cons (next-event (first loe))
                (next-loe (rest loe)))]))
 
-;; WISH LIST
-;; !!!!
 ;; Event -> Event
-;; TODO: Continue HERE
-(define (next-event evnt) evnt) ; stub
+;; Calls appropriate next function for the event type.
 
+;; Tests are handled in the caller.
 
-;; WISH LIST
-;; !!!!
-;; ListOfEvents -> Image
-(define (render-loe loe) loe)
-
-;; WISH LIST
-;; !!!!
-;; ListOfEvents -> ListOfEvents
-(define (handle-loe loe) loe)
-
+; (define (next-event evnt) evnt) ; stub
+(define (next-event evt)
+  (cond [(tank? evt) (next-tank evt)]
+        [(bullet? evt) (next-bullet evt)]
+        [(alien-ship? evt) (next-alien-ship evt)]))
 
 ;; WISH LIST
 ;; !!!!
@@ -191,15 +185,67 @@
              (tank-dx tnk)))
 
 
-;; Tank -> Iage
-;; Renders tank from the tank data definition.
+;; Renders
+;; ListOfEvents -> Image
+;; Renders the action from the list of events.
 
-(check-expect (render-tank (make-tank 0 0 10)) (place-image TANK-SPRITE 0 0 MTS))
-(check-expect (render-tank (make-tank 10 0 10)) (place-image TANK-SPRITE 10 0 MTS))
+; (define (render-loe loe) MTS) ; stub
+
+(define (render-loe loe)
+  (cond [(empty? loe) MTS]
+        [else
+         (render-event (first loe) (render-loe (rest loe)))]))
+
+;; Event Image -> Image
+;; Calls correct event rederer.
+; (define (render-event evt img) img) ; stub
+
+(define (render-event evt img)
+  (cond [(tank? evt) (render-tank evt img)]
+        [(bullet? evt) (render-bullet evt img)]
+        [(alien-ship? evt) (render-alien-ship evt img)]))
+
+;; WISH LIST
+;; !!!!
+;; Event Image -> Event
+(define (render-bullet evt img) img)
+
+
+;; WISH LIST
+;; !!!!
+;; Event Image -> Event
+(define (render-alien-ship evt img) img)
+
+
+;; ListOfEvents -> ListOfEvents
+;; Calls appropriate handle funciton depenending on the event type.
+
+;; Handlers
+; (define (handle-loe loe evt) loe) ; stub
+(define (handle-loe loe evt)
+  (cond [(empty? loe) empty]
+        [else
+         (cons (handle-event (first loe) evt)
+               (handle-loe (rest loe) evt))]))
+
+
+;; Event KeyEvent -> Event
+;; Changes the state of the event depending on the key pressed.
+
+; (define (handle-event evt) evt) ; stub
+(define (handle-event evt key)
+  (cond [(tank? evt) (handle-tank evt key)]
+        [else evt]))
+
+;; Tank Image -> Image
+;; Renders tank from the tank data definition and places it on Image.
+
+(check-expect (render-tank (make-tank 0 0 10) MTS) (place-image TANK-SPRITE 0 0 MTS))
+(check-expect (render-tank (make-tank 10 0 10) MTS) (place-image TANK-SPRITE 10 0 MTS))
 
 ; (define (render-tank tank) MTS) ; stub
-(define (render-tank tnk)
-  (place-image TANK-SPRITE (tank-x tnk) (tank-y tnk) MTS))
+(define (render-tank tnk img)
+  (place-image TANK-SPRITE (tank-x tnk) (tank-y tnk) img))
 
 ;; Tank KeyEvent -> Tank
 ;; Changes direction of the tank depending on Key pressed.
@@ -223,4 +269,4 @@
         [else tnk]))
 
 
-;; (main (make-tank (/ MTS-WIDTH 2) (- MTS-HEIGHT (/ TANK-HEIGHT 2)) 10))
+;; (main (list (make-tank (/ MTS-WIDTH 2) (- MTS-HEIGHT (/ TANK-HEIGHT 2)) 10)))
