@@ -97,7 +97,7 @@
 
 (define ET  (make-tank 0 0 1))
 (define EB  (make-bullet 0 12 10))
-(define EAS (make-alien-ship 13 12 10))
+(define EAS (make-alien-ship 13 12 10 12))
 
 #;(define (fn-for-event evt)
     (cond [(tank? evt) (fn-for-tank evt)]
