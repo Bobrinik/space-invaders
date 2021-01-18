@@ -40,6 +40,8 @@
 
 (define BULLET-SPRITE (ellipse (* CANNON-WIDTH 0.75) (/ TANK-HEIGHT 2) "solid" "red"))
 
+(define BULLET-SPEED -12)
+
 ; Define Scene
 (define MTS-WIDTH 200)
 (define MTS-HEIGHT 500)
@@ -138,13 +140,16 @@
 (check-expect (next-loe LOE1) (list (next-tank (first LOE1))))
 (check-expect (next-loe LOE2) (list (next-tank (first LOE2)) (next-bullet (second LOE2))  (next-bullet (third LOE2))))
 (check-expect (next-loe LOE3) (cons (next-alien-ship (first LOE3)) (cons (next-alien-ship (second LOE3)) (next-loe LOE2))))
+(check-expect (next-loe (cons (make-bullet 12 0 BULLET-SPEED) LOE3)) (cons (next-alien-ship (first LOE3)) (cons (next-alien-ship (second LOE3)) (next-loe LOE2))))
 
 ; (define (next-loe loe) loe) ; stub
 (define (next-loe loe)
   (cond [(empty? loe) empty]
         [else
-         (cons (next-event (first loe))
-               (next-loe (rest loe)))]))
+         (if (empty? (next-event (first loe)))
+             (next-loe (rest loe))
+             (cons (next-event (first loe))
+                   (next-loe (rest loe))))]))
 
 ;; Event -> Event
 ;; Calls appropriate next function for the event type.
@@ -157,10 +162,17 @@
         [(bullet? evt) (next-bullet evt)]
         [(alien-ship? evt) (next-alien-ship evt)]))
 
-;; WISH LIST
-;; !!!!
 ;; bullet -> bullet
-(define (next-bullet blt) blt)
+;; Produces next state of the bullet.
+(check-expect (next-bullet (make-bullet 1 12 BULLET-SPEED)) (make-bullet 1 (+ 12 BULLET-SPEED) BULLET-SPEED))
+(check-expect (next-bullet (make-bullet 1 0 BULLET-SPEED)) empty) ; Bullet travels outside of canvas
+
+; (define (next-bullet blt) blt) ; stub
+
+(define (next-bullet blt)
+  (cond [(> 0 (+ (bullet-y blt) (bullet-dy blt))) empty]
+        [else
+         (make-bullet (bullet-x blt) (+ (bullet-y blt) (bullet-dy blt)) (bullet-dy blt))]))
 
 
 ;; WISH LIST
@@ -205,10 +217,13 @@
         [(bullet? evt) (render-bullet evt img)]
         [(alien-ship? evt) (render-alien-ship evt img)]))
 
-;; WISH LIST
-;; !!!!
-;; Event Image -> Event
-(define (render-bullet evt img) img)
+;; Event Image -> Image
+;; Draws a bullet on the Img
+(check-expect (render-bullet (make-bullet 19 12 12) MTS) (place-image BULLET-SPRITE 19 12 MTS))
+
+; (define (render-bullet evt img) img) ; stub
+(define (render-bullet evt img)
+  (place-image BULLET-SPRITE (bullet-x evt) (bullet-y evt) img))
 
 
 ;; WISH LIST
@@ -225,11 +240,31 @@
 (define (handle-loe loe evt)
   (cond [(empty? loe) empty]
         [else
-         (cons (handle-event (first loe) evt)
-               (handle-loe (rest loe) evt))]))
+         (join-lists (handle-event (first loe) evt) ; Event -> LiestOfEvents
+                     (handle-loe (rest loe) evt))]))
 
+;; List List -> List
+;; Joints two lists into one flat list.
 
-;; Event KeyEvent -> Event
+(check-expect (join-lists empty empty) empty)
+(check-expect (join-lists 1 empty) (cons 1 empty))
+(check-expect (join-lists (list 1 2 3) empty) (list 1 2 3))
+(check-expect (join-lists (list 1 2 3) (list 1 23 4)) (list 1 2 3 1 23 4))
+
+; (define (join-lists l1 l2) l1) ; stub
+
+(define (join-lists l1 l2)
+  (cond [(empty? l1) l2]
+        [(list? l1)
+         (cons
+          (first l1)
+          (join-lists (rest l1) l2))]
+        [else
+         (cons l1 l2)]))
+
+;; ListOfEvent
+
+;; Event KeyEvent -> ListOfEvents
 ;; Changes the state of the event depending on the key pressed.
 
 ; (define (handle-event evt) evt) ; stub
@@ -255,17 +290,21 @@
 (check-expect (handle-tank (make-tank 0 12 10) "right")  (make-tank 0 12 10))
 (check-expect (handle-tank (make-tank 0 12 -10) "right") (make-tank 0 12 10))
 
+(check-expect (handle-tank (make-tank 12 12 -10) " ") (list (make-tank 12 12 -10) (make-bullet 12 (- 12 (/ (image-height TANK-SPRITE) 2)) BULLET-SPEED)))
+
 
 ; (define (handle-tank tnk kvt) tnk) ; stub
 (define (handle-tank tnk ke)
   (cond [(key=? ke "left") (make-tank (tank-x tnk) (tank-y tnk)
                                       (if (> 0 (tank-dx tnk))
                                           (tank-dx tnk)
+
                                           (* -1 (tank-dx tnk))))]
         [(key=? ke "right") (make-tank (tank-x tnk) (tank-y tnk)
                                        (if (< 0 (tank-dx tnk))
                                            (tank-dx tnk)
                                            (* -1 (tank-dx tnk))))]
+        [(key=? ke " ") (list tnk (make-bullet (tank-x tnk)  (- (tank-y tnk) (/ (image-height TANK-SPRITE) 2)) BULLET-SPEED))]
         [else tnk]))
 
 
