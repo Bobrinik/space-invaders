@@ -128,7 +128,7 @@
 
 (define (main tnk)
   (big-bang  tnk
-    (on-tick next-loe 1)  ; Tank -> Tank
+    (on-tick next-loe)    ; Tank -> Tank
     (to-draw render-loe)  ; Tank -> Image
     (on-key handle-loe))) ; Tank KeyEvent -> Tank
 
