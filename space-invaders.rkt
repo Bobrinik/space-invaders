@@ -128,9 +128,9 @@
 
 (define (main tnk)
   (big-bang  tnk
-    (on-tick next-loe)    ; Tank -> Tank
-    (to-draw render-loe)  ; Tank -> Image
-    (on-key handle-loe))) ; Tank KeyEvent -> Tank
+    (on-tick next-loe)    ; ListOfEvents -> ListOfEvents
+    (to-draw render-loe)  ; ListOfEvents -> Image
+    (on-key handle-loe))) ; ListOfEvents KeyEvent -> ListOfEvents
 
 
 ;; Next Events
@@ -146,7 +146,7 @@
 (define (next-loe loe)
   (cond [(empty? loe) empty]
         [else
-         (if (empty? (next-event (first loe)))
+         (if (empty? (next-event (first loe))) ; TODO: Here we would need to produce a new alien ship.
              (next-loe (rest loe))
              (cons (next-event (first loe))
                    (next-loe (rest loe))))]))
