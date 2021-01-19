@@ -47,6 +47,10 @@
 (define MTS-HEIGHT 500)
 (define MTS (empty-scene MTS-WIDTH MTS-HEIGHT))
 
+;; Constants: Alien Ship
+(define ALIEN-SHIP-DX 12)
+(define ALIEN-SHIP-DY 20)
+
 ;; Data Definitions
 
 (define-struct tank (x y dx))
@@ -131,6 +135,25 @@
     (on-tick next-loe)    ; ListOfEvents -> ListOfEvents
     (to-draw render-loe)  ; ListOfEvents -> Image
     (on-key handle-loe))) ; ListOfEvents KeyEvent -> ListOfEvents
+
+;; WISHLIST
+;; !!!
+;; ListOfEvents -> ListOfEvents
+;; Works as an assembly function.
+(define (tock loe)
+  (if (alien-ship-arrives? loe)
+      (cons (make-alien-ship (get-alien-ship-x-pos 0) 0 ALIEN-SHIP-DX ALIEN-SHIP-DY) (next-loe loe))
+      (next-loe loe))) ; stub
+
+;; WISH LIST
+;; !!!
+;; ListOfEvents -> Boolean
+(define (alien-ship-arrives? loe) #f)
+
+;; WISH LIST
+;; !!!
+;; Integer -> Interval[0, MTS-MAX-WIDHT]
+(define (get-alien-ship-x-pos x) 0)
 
 
 ;; Next Events
@@ -308,4 +331,4 @@
         [else tnk]))
 
 
-;; (main (list (make-tank (/ MTS-WIDTH 2) (- MTS-HEIGHT (/ TANK-HEIGHT 2)) 10)))
+(main (list (make-tank (/ MTS-WIDTH 2) (- MTS-HEIGHT (/ TANK-HEIGHT 2)) 10)))
