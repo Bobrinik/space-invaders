@@ -7,8 +7,8 @@
 ;; Constants
 
 ; Define Sprites
-(define ALIEN-SHIP-WIDTH 60)
-(define ALIEN-SHIP-HEIGHT 30)
+(define ALIEN-SHIP-WIDTH 30)
+(define ALIEN-SHIP-HEIGHT 15)
 
 (define ALIEN-SHIP-SPRITE (overlay/xy
                            (ellipse ALIEN-SHIP-WIDTH ALIEN-SHIP-HEIGHT "solid" "blue")
@@ -48,8 +48,8 @@
 (define MTS (empty-scene MTS-WIDTH MTS-HEIGHT))
 
 ;; Constants: Alien Ship
-(define ALIEN-SHIP-DX 12)
-(define ALIEN-SHIP-DY 20)
+(define ALIEN-SHIP-DX 6)
+(define ALIEN-SHIP-DY 2.5)
 
 ;; Data Definitions
 
@@ -129,31 +129,32 @@
 
 
 ;; Functions
-
 (define (main tnk)
   (big-bang  tnk
-    (on-tick next-loe)    ; ListOfEvents -> ListOfEvents
+    (on-tick tock)    ; ListOfEvents -> ListOfEvents
     (to-draw render-loe)  ; ListOfEvents -> Image
     (on-key handle-loe))) ; ListOfEvents KeyEvent -> ListOfEvents
 
-;; WISHLIST
-;; !!!
 ;; ListOfEvents -> ListOfEvents
 ;; Works as an assembly function.
 (define (tock loe)
   (if (alien-ship-arrives? loe)
-      (cons (make-alien-ship (get-alien-ship-x-pos 0) 0 ALIEN-SHIP-DX ALIEN-SHIP-DY) (next-loe loe))
+      (cons (create-alien-ship ALIEN-SHIP-DX ALIEN-SHIP-DY) (next-loe loe))
       (next-loe loe))) ; stub
 
-;; WISH LIST
-;; !!!
 ;; ListOfEvents -> Boolean
-(define (alien-ship-arrives? loe) #f)
+;; Makes new alien ship appear once in three times.
+(define (alien-ship-arrives? loe)
+  (and (> 4 (length loe)) alien-ship-frequency))
 
-;; WISH LIST
-;; !!!
+(define alien-ship-frequency (= 1 (random 10)))
+
 ;; Integer -> Interval[0, MTS-MAX-WIDHT]
-(define (get-alien-ship-x-pos x) 0)
+;; Creates an alien-ship at a random position on x axis.
+(check-random (create-alien-ship ALIEN-SHIP-DX ALIEN-SHIP-DY) (make-alien-ship (random MTS-WIDTH) 0 ALIEN-SHIP-DX ALIEN-SHIP-DY))
+
+(define (create-alien-ship dx dy)
+  (make-alien-ship (random MTS-WIDTH) 0 dx dy))
 
 
 ;; Next Events
@@ -169,7 +170,7 @@
 (define (next-loe loe)
   (cond [(empty? loe) empty]
         [else
-         (if (empty? (next-event (first loe))) ; TODO: Here we would need to produce a new alien ship.
+         (if (empty? (next-event (first loe)))
              (next-loe (rest loe))
              (cons (next-event (first loe))
                    (next-loe (rest loe))))]))
@@ -198,10 +199,28 @@
          (make-bullet (bullet-x blt) (+ (bullet-y blt) (bullet-dy blt)) (bullet-dy blt))]))
 
 
-;; WISH LIST
-;; !!!!
 ;; alien-ship -> alien-ship
-(define (next-alien-ship as) as)
+;; Produces next state of the ship.
+
+(check-expect (next-alien-ship (make-alien-ship 10 12 10 2)) (make-alien-ship 20 14 10 2))
+(check-expect (next-alien-ship (make-alien-ship MTS-WIDTH 12 10 2)) (make-alien-ship (- MTS-WIDTH 10) 14 -10 2))
+(check-expect (next-alien-ship (make-alien-ship 0 12 10 2)) (make-alien-ship 10 14 10 2))
+(check-expect (next-alien-ship (make-alien-ship 0 MTS-HEIGHT 10 2)) empty)
+
+
+; (define (next-alien-ship as) as) ; stub
+(define (next-alien-ship as)
+  (cond
+    [(> (+ (alien-ship-y as) (alien-ship-dy as)) MTS-HEIGHT) empty]
+    [(or (>= (+ (alien-ship-x as) (alien-ship-dx as)) MTS-WIDTH)
+         (<= (+ (alien-ship-x as) (alien-ship-dx as)) 0))
+     (make-alien-ship (+ (alien-ship-x as) (* -1 (alien-ship-dx as))) (+ (alien-ship-y as) (alien-ship-dy as)) (* -1 (alien-ship-dx as)) (alien-ship-dy as))]
+    [else
+     (make-alien-ship (+ (alien-ship-x as) (alien-ship-dx as))
+                      (+ (alien-ship-y as) (alien-ship-dy as))
+                      (alien-ship-dx as)
+                      (alien-ship-dy as))]))
+
 
 ;; Tank -> Tank
 ;; Produces the fallowing state of the tank.
@@ -249,10 +268,18 @@
   (place-image BULLET-SPRITE (bullet-x evt) (bullet-y evt) img))
 
 
-;; WISH LIST
-;; !!!!
 ;; Event Image -> Event
-(define (render-alien-ship evt img) img)
+;; purp. It places an alien ship on the canvas.
+
+(check-expect (render-alien-ship (make-alien-ship 1 1 12 12) MTS) (place-image ALIEN-SHIP-SPRITE 1 1 MTS))
+(check-expect (render-alien-ship (make-alien-ship 11 13 12 12) MTS) (place-image ALIEN-SHIP-SPRITE 11 13 MTS))
+
+; (define (render-alien-ship evt img) img) ; stub
+(define (render-alien-ship evt img)
+  (place-image ALIEN-SHIP-SPRITE
+               (alien-ship-x evt)
+               (alien-ship-y evt)
+               img))
 
 
 ;; ListOfEvents -> ListOfEvents
