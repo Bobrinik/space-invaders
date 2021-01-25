@@ -138,16 +138,82 @@
 ;; ListOfEvents -> ListOfEvents
 ;; Works as an assembly function.
 (define (tock loe)
-  (if (alien-ship-arrives? loe)
-      (cons (create-alien-ship ALIEN-SHIP-DX ALIEN-SHIP-DY) (next-loe loe))
-      (next-loe loe))) ; stub
+  (bullet-collisions
+   (if (alien-ship-arrives? loe)
+       (cons (create-alien-ship ALIEN-SHIP-DX ALIEN-SHIP-DY) (next-loe loe))
+       (next-loe loe)))) ; stub
+
+;; ListOfEvents -> ListOfEvents
+;; Collides bullets with alien ships.
+
+(check-expect (bullet-collisions empty) empty)
+(check-expect (bullet-collisions (list (make-alien-ship 1 12 1 1))) (list (make-alien-ship 1 12 1 1)))
+(check-expect (bullet-collisions (list (make-alien-ship 1 12 1 1) (make-alien-ship 1 12 1 1) (make-bullet 1 12 10))) (list (make-alien-ship 1 12 1 1)))
+(check-expect (bullet-collisions (list (make-bullet 1 12 1) (make-alien-ship 1 12 1 1))) empty)
+(check-expect (bullet-collisions (list (make-bullet 1 12 1) (make-alien-ship 1 13 1 1) (make-alien-ship 1 12 1 1))) (list (make-alien-ship 1 13 1 1)))
+(check-expect (bullet-collisions (list (make-bullet 1 13 1) (make-bullet 1 12 1) (make-alien-ship 1 13 1 1))) (list (make-bullet 1 12 1)))
+
+; (define (bullet-collisions loe) loe) ; stub
+(define (bullet-collisions loe)
+  (cond [(empty? loe) empty]
+        [else
+         (cond [(alien-ship? (first loe))
+                (alien-ship-hit (first loe)
+                                (bullet-collisions (rest loe)))]
+               [(bullet? (first loe))
+                (bullet-hits (first loe)
+                             (bullet-collisions (rest loe)))]
+               [else
+                (cons (first loe) (bullet-collisions (rest loe)))])]))
+
+
+;; alien-ship ListOfEvents -> ListOfEvents
+;; Alien ship is hit by some boullet in the ListOfEvents
+
+(check-expect (alien-ship-hit  (make-alien-ship 1 12 1 1) (list (make-bullet 1 12 1))) empty)
+(check-expect (alien-ship-hit  (make-alien-ship 1 12 1 1) (list (make-bullet 1 1 1))) (list (make-bullet 1 1 1) (make-alien-ship 1 12 1 1)))
+(check-expect (alien-ship-hit  (make-alien-ship 1 12 1 1) (list (make-bullet 1 1 1) (make-bullet 1 12 1))) (list (make-bullet 1 1 1)))
+(check-expect (alien-ship-hit  (make-alien-ship 1 12 1 1) (list (make-bullet 1 1 1) (make-alien-ship 1 12 1 1) (make-bullet 1 12 1))) (list (make-bullet 1 1 1)  (make-alien-ship 1 12 1 1)))
+
+; (define (alien-ship-hit as loe) loe) ; stub
+
+(define (alien-ship-hit as loe)
+  (cond [(empty? loe) (cons as empty)]
+        [else
+         (if (and (bullet? (first loe))
+                  (bullet-touches-alien-ship? (first loe) as))
+             (rest loe)
+             (cons (first loe) (alien-ship-hit as (rest loe))))]))
+
+
+;; bullet ListOfEvents -> ListOfEvents
+;; Bullet hits some alien ship in the ListOfEvents
+
+
+(check-expect (bullet-hits (make-bullet 1 12 1) (list (make-alien-ship 1 12 1 1))) empty)
+(check-expect (bullet-hits (make-bullet 1 12 1) empty) (list (make-bullet 1 12 1)))
+(check-expect (bullet-hits (make-bullet 1 12 1) (list (make-alien-ship 1 13 1 1))) (list (make-alien-ship 1 13 1 1) (make-bullet 1 12 1)))
+(check-expect (bullet-hits (make-bullet 1 13 1) (list (make-alien-ship 1 1 1 1) (make-alien-ship 1 13 1 1))) (list (make-alien-ship 1 1 1 1)))
+
+; (define (bullet-hits blt loe) loe) ; stub
+
+(define (bullet-hits blt loe)
+  (cond [(empty? loe) (cons blt empty)]
+        [else
+         (if (and (alien-ship? (first loe)) (bullet-touches-alien-ship? blt (first loe)))
+             (rest loe)
+             (cons (first loe) (bullet-hits blt (rest loe))))]))
+
+;; bullet alien-ship -> Boolean
+;; Tells if bullet has touched an alien ship
+(define (bullet-touches-alien-ship? blt as)
+  (and (> 20 (abs (- (alien-ship-x as) (bullet-x blt))))
+       (> 20 (abs (- (alien-ship-y as) (bullet-y blt))))))
 
 ;; ListOfEvents -> Boolean
 ;; Makes new alien ship appear once in three times.
 (define (alien-ship-arrives? loe)
-  (and (> 4 (length loe)) alien-ship-frequency))
-
-(define alien-ship-frequency (= 1 (random 10)))
+  (and (> 4 (length loe)) (= 1 (random 10))))
 
 ;; Integer -> Interval[0, MTS-MAX-WIDHT]
 ;; Creates an alien-ship at a random position on x axis.
