@@ -207,8 +207,8 @@
 ;; bullet alien-ship -> Boolean
 ;; Tells if bullet has touched an alien ship
 (define (bullet-touches-alien-ship? blt as)
-  (and (> 20 (abs (- (alien-ship-x as) (bullet-x blt))))
-       (> 20 (abs (- (alien-ship-y as) (bullet-y blt))))))
+  (and (> (/ (image-width ALIEN-SHIP-SPRITE) 2) (abs (- (alien-ship-x as) (bullet-x blt))))
+       (> (/ (image-height ALIEN-SHIP-SPRITE) 2) (abs (- (alien-ship-y as) (bullet-y blt))))))
 
 ;; ListOfEvents -> Boolean
 ;; Makes new alien ship appear once in three times.
@@ -414,7 +414,6 @@
   (cond [(key=? ke "left") (make-tank (tank-x tnk) (tank-y tnk)
                                       (if (> 0 (tank-dx tnk))
                                           (tank-dx tnk)
-
                                           (* -1 (tank-dx tnk))))]
         [(key=? ke "right") (make-tank (tank-x tnk) (tank-y tnk)
                                        (if (< 0 (tank-dx tnk))
