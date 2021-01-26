@@ -51,6 +51,9 @@
 (define ALIEN-SHIP-DX 6)
 (define ALIEN-SHIP-DY 2.5)
 
+(define HIT-RANGE-X (/ (image-width ALIEN-SHIP-SPRITE) 2))
+(define HIT-RANGE-Y (/ (image-height ALIEN-SHIP-SPRITE) 2))
+
 ;; Data Definitions
 
 (define-struct tank (x y dx))
@@ -151,7 +154,7 @@
 (check-expect (bullet-collisions (list (make-alien-ship 1 12 1 1) (make-alien-ship 1 12 1 1) (make-bullet 1 12 10))) (list (make-alien-ship 1 12 1 1)))
 (check-expect (bullet-collisions (list (make-bullet 1 12 1) (make-alien-ship 1 12 1 1))) empty)
 (check-expect (bullet-collisions (list (make-bullet 1 12 1) (make-alien-ship 1 13 1 1) (make-alien-ship 1 12 1 1))) (list (make-alien-ship 1 13 1 1)))
-(check-expect (bullet-collisions (list (make-bullet 1 13 1) (make-bullet 1 12 1) (make-alien-ship 1 13 1 1))) (list (make-bullet 1 12 1)))
+(check-expect (bullet-collisions (list (make-bullet 1 13 1) (make-bullet (+ HIT-RANGE-X 1) (+ HIT-RANGE-Y 13) 1) (make-alien-ship 1 13 1 1))) (list (make-bullet (+ HIT-RANGE-X 1) (+ HIT-RANGE-Y 13) 1)))
 
 ; (define (bullet-collisions loe) loe) ; stub
 (define (bullet-collisions loe)
@@ -171,9 +174,16 @@
 ;; Alien ship is hit by some boullet in the ListOfEvents
 
 (check-expect (alien-ship-hit  (make-alien-ship 1 12 1 1) (list (make-bullet 1 12 1))) empty)
-(check-expect (alien-ship-hit  (make-alien-ship 1 12 1 1) (list (make-bullet 1 1 1))) (list (make-bullet 1 1 1) (make-alien-ship 1 12 1 1)))
-(check-expect (alien-ship-hit  (make-alien-ship 1 12 1 1) (list (make-bullet 1 1 1) (make-bullet 1 12 1))) (list (make-bullet 1 1 1)))
-(check-expect (alien-ship-hit  (make-alien-ship 1 12 1 1) (list (make-bullet 1 1 1) (make-alien-ship 1 12 1 1) (make-bullet 1 12 1))) (list (make-bullet 1 1 1)  (make-alien-ship 1 12 1 1)))
+
+(check-expect (alien-ship-hit  (make-alien-ship 1 12 1 1) (list (make-bullet (+ HIT-RANGE-X 1) (+ HIT-RANGE-Y 12) 1)))
+              (list (make-bullet (+ HIT-RANGE-X 1) (+ HIT-RANGE-Y 12) 1) (make-alien-ship 1 12 1 1)))
+
+(check-expect (alien-ship-hit  (make-alien-ship 1 12 1 1) (list (make-bullet (+ HIT-RANGE-X 1) (+ HIT-RANGE-Y 1) 1) (make-bullet 1 12 1)))
+              (list (make-bullet (+ HIT-RANGE-X 1) (+ HIT-RANGE-Y 1) 1)))
+
+(check-expect (alien-ship-hit  (make-alien-ship 1 12 1 1) (list (make-bullet (+ HIT-RANGE-X 1) (+ HIT-RANGE-Y 1) 1) (make-alien-ship 1 12 1 1) (make-bullet 1 12 1)))
+              (list (make-bullet (+ HIT-RANGE-X 1) (+ HIT-RANGE-Y 1) 1)
+                    (make-alien-ship 1 12 1 1)))
 
 ; (define (alien-ship-hit as loe) loe) ; stub
 
@@ -192,8 +202,11 @@
 
 (check-expect (bullet-hits (make-bullet 1 12 1) (list (make-alien-ship 1 12 1 1))) empty)
 (check-expect (bullet-hits (make-bullet 1 12 1) empty) (list (make-bullet 1 12 1)))
-(check-expect (bullet-hits (make-bullet 1 12 1) (list (make-alien-ship 1 13 1 1))) (list (make-alien-ship 1 13 1 1) (make-bullet 1 12 1)))
-(check-expect (bullet-hits (make-bullet 1 13 1) (list (make-alien-ship 1 1 1 1) (make-alien-ship 1 13 1 1))) (list (make-alien-ship 1 1 1 1)))
+(check-expect (bullet-hits (make-bullet 1 12 1) (list (make-alien-ship (+ HIT-RANGE-X 1) (+ HIT-RANGE-Y 12) 1 1)))
+              (list (make-alien-ship (+ HIT-RANGE-X 1) (+ HIT-RANGE-Y 12) 1 1) (make-bullet 1 12 1)))
+
+(check-expect (bullet-hits (make-bullet 1 13 1) (list (make-alien-ship (+ HIT-RANGE-X 1) (+ HIT-RANGE-Y 1) 1 1) (make-alien-ship 1 13 1 1)))
+              (list (make-alien-ship (+ HIT-RANGE-X 1) (+ HIT-RANGE-Y 1) 1 1)))
 
 ; (define (bullet-hits blt loe) loe) ; stub
 
@@ -207,13 +220,15 @@
 ;; bullet alien-ship -> Boolean
 ;; Tells if bullet has touched an alien ship
 (define (bullet-touches-alien-ship? blt as)
-  (and (> (/ (image-width ALIEN-SHIP-SPRITE) 2) (abs (- (alien-ship-x as) (bullet-x blt))))
-       (> (/ (image-height ALIEN-SHIP-SPRITE) 2) (abs (- (alien-ship-y as) (bullet-y blt))))))
+  (and (> HIT-RANGE-X (abs (- (alien-ship-x as) (bullet-x blt))))
+       (> HIT-RANGE-Y (abs (- (alien-ship-y as) (bullet-y blt))))))
+
 
 ;; ListOfEvents -> Boolean
 ;; Makes new alien ship appear once in three times.
 (define (alien-ship-arrives? loe)
-  (and (> 4 (length loe)) (= 1 (random 10))))
+  (and (> 4 (count loe alien-ship?)) (= 1 (random 10))))
+
 
 ;; Integer -> Interval[0, MTS-MAX-WIDHT]
 ;; Creates an alien-ship at a random position on x axis.
@@ -423,4 +438,23 @@
         [else tnk]))
 
 
-(main (list (make-tank (/ MTS-WIDTH 2) (- MTS-HEIGHT (/ TANK-HEIGHT 2)) 10)))
+;; Utilities
+
+;; List -> Natural
+;; Count number of elements in the list.
+
+(check-expect (count (list 1 2 3 "a") number?) 3)
+(check-expect (count (list 1 2 3 "a") string?) 1)
+
+; (define (count lst predicate) lst) ; stub
+
+(define (count lst predicate?)
+  (cond [(empty? lst) 0]
+        [else
+         (if (predicate? (first lst))
+             (+ 1 (count (rest lst) predicate?))
+             (count (rest lst) predicate?))]))
+
+
+
+; (main (list (make-tank (/ MTS-WIDTH 2) (- MTS-HEIGHT (/ TANK-HEIGHT 2)) 10)))
