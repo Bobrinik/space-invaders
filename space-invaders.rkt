@@ -97,21 +97,35 @@
           (alien-ship-dx als)
           (alien-ship-dy als)))
 
+(define-struct game-over (text))
+;; GameOver structure is a compound data structure (make-game-over String)
+;; interp: GameOver tells that the game is over.
+
+(define GO (make-game-over "GAME OVER 🦍"))
+
+(define (fn-for-go go)
+  (... (game-over-text go)))
+
+;; Template rules:
+;; - compound: 1 field
 
 ;; Event is one of:
 ;; - tank
 ;; - bullet
 ;; - alien-ship
+;; - game-over
 ;; interp. Event represents possible data definition displayable on empty-scene
 
 (define ET  (make-tank 0 0 1))
 (define EB  (make-bullet 0 12 10))
 (define EAS (make-alien-ship 13 12 10 12))
+(define GO2 (make-game-over "Game over"))
 
 #;(define (fn-for-event evt)
     (cond [(tank? evt) (fn-for-tank evt)]
           [(bullet? evt) (fn-for-bullet evt)]
-          [(alien-ship? evt) (fn-for-alien-ship evt)]))
+          [(alien-ship? evt) (fn-for-alien-ship evt)]
+          [(game-over? evt) (fn-for-go evt)]))
 
 ;; ListOfEvents is one of:
 ;; - empty
@@ -141,10 +155,42 @@
 ;; ListOfEvents -> ListOfEvents
 ;; Works as an assembly function.
 (define (tock loe)
-  (bullet-collisions
-   (if (alien-ship-arrives? loe)
-       (cons (create-alien-ship ALIEN-SHIP-DX ALIEN-SHIP-DY) (next-loe loe))
-       (next-loe loe)))) ; stub
+  (if (or (is-game-over? loe ) (game-over? (first loe)))
+      (list GO)
+      (bullet-collisions
+       (if (alien-ship-arrives? loe)
+           (cons (create-alien-ship ALIEN-SHIP-DX ALIEN-SHIP-DY) (next-loe loe))
+           (next-loe loe))))) ; stub
+
+;; ListOfEvents -> Boolean
+;; Returns GameOver if the game over condition are reached
+
+(check-expect (is-game-over? empty) #f)
+(check-expect (is-game-over? (list (make-tank 10 0 10))) #f)
+(check-expect (is-game-over? (list (make-tank 10 0 10)  (make-alien-ship 10 0 10 10))) #f)
+(check-expect (is-game-over? (list (make-tank 10 0 10)  (make-alien-ship 10 MTS-HEIGHT 10 10))) #t)
+(check-expect (is-game-over? (list (make-tank 10 0 10)  (make-alien-ship 10 0 10 10) (make-alien-ship 10 (+ MTS-HEIGHT 2) 10 10))) #t)
+
+(define (is-game-over? evnt)
+  (cond [(empty? evnt) #f]
+        [else
+         (if (and (alien-ship? (first evnt))
+                  (alien-ship-touch-down? (first evnt)))
+             #t
+             (is-game-over? (rest evnt)))]))
+
+
+;; alien-ship -> Boolean
+;; Returns true if alien ship has reached ground level.
+(check-expect (alien-ship-touch-down? (make-alien-ship 10 (- MTS-HEIGHT 2) 10 10)) #f)
+(check-expect (alien-ship-touch-down? (make-alien-ship 10 MTS-HEIGHT 10 10)) #t)
+(check-expect (alien-ship-touch-down? (make-alien-ship 10 (+ MTS-HEIGHT 2) 10 10)) #t)
+
+; (define (alien-ship-touch-down? as) #f) ; stub
+
+(define (alien-ship-touch-down? als)
+  (>= (alien-ship-y als) MTS-HEIGHT))
+
 
 ;; ListOfEvents -> ListOfEvents
 ;; Collides bullets with alien ships.
@@ -338,7 +384,8 @@
 (define (render-event evt img)
   (cond [(tank? evt) (render-tank evt img)]
         [(bullet? evt) (render-bullet evt img)]
-        [(alien-ship? evt) (render-alien-ship evt img)]))
+        [(alien-ship? evt) (render-alien-ship evt img)]
+        [(game-over? evt)  (render-game-over evt img)]))
 
 ;; Event Image -> Image
 ;; Draws a bullet on the Img
@@ -360,6 +407,19 @@
   (place-image ALIEN-SHIP-SPRITE
                (alien-ship-x evt)
                (alien-ship-y evt)
+               img))
+
+
+;; Event Image -> Event
+;; purp. It renders GameOver.
+
+(check-expect (render-game-over GO MTS) (place-image (text (game-over-text GO) 23 "Red") (/ MTS-WIDTH 2) (/ MTS-HEIGHT 2) MTS))
+
+; (define (render-game-over evt img) img) ; stub
+(define (render-game-over evt img)
+  (place-image (text (game-over-text evt) 23 "Red")
+               (/ MTS-WIDTH 2)
+               (/ MTS-HEIGHT 2)
                img))
 
 
@@ -457,4 +517,4 @@
 
 
 
-; (main (list (make-tank (/ MTS-WIDTH 2) (- MTS-HEIGHT (/ TANK-HEIGHT 2)) 10)))
+(main (list (make-tank (/ MTS-WIDTH 2) (- MTS-HEIGHT (/ TANK-HEIGHT 2)) 10)))
