@@ -13,4 +13,4 @@ You can find domain analysis for this game in  [Domain Analysis](./space_invader
 
 ## Gameplay
 
-![game_play](/home/router/space-invaders/resources/game_play.gif)
+![game_play](./resources/game_play.gif)
