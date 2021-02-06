@@ -49,7 +49,7 @@
 (define MTS (empty-scene MTS-WIDTH MTS-HEIGHT))
 
 ;; Constants: Alien Ship
-(define ALIEN-SHIP-DX 6)
+(define ALIEN-SHIP-DX 2.5)
 (define ALIEN-SHIP-DY 2.5)
 
 (define HIT-RANGE-X (/ (image-width ALIEN-SHIP-SPRITE) 2))
