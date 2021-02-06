@@ -41,6 +41,7 @@
 (define BULLET-SPRITE (ellipse (* CANNON-WIDTH 0.75) (/ TANK-HEIGHT 2) "solid" "red"))
 
 (define BULLET-SPEED -12)
+(define TANK-SPEED 10)
 
 ; Define Scene
 (define MTS-WIDTH 200)
@@ -460,7 +461,9 @@
 
 ; (define (handle-event evt) evt) ; stub
 (define (handle-event evt key)
-  (cond [(tank? evt) (handle-tank evt key)]
+  (cond [(tank? evt) (if (= 0 (tank-dx evt))
+                         (handle-tank (make-tank (tank-x evt) (tank-y evt) TANK-SPEED) key)
+                         (handle-tank evt key))]
         [else evt]))
 
 ;; Tank Image -> Image
@@ -517,4 +520,4 @@
 
 
 
-(main (list (make-tank (/ MTS-WIDTH 2) (- MTS-HEIGHT (/ TANK-HEIGHT 2)) 10)))
+(main (list (make-tank (/ MTS-WIDTH 2) (- MTS-HEIGHT (/ TANK-HEIGHT 2)) 0)))
